@@ -1,0 +1,33 @@
+run_name: REF_1
+dataset: isic
+model_type: unet
+
+dataloader:
+  batch_size: 10
+  num_workers: 8
+  drop_last: true
+  shuffle: true
+
+train_settings:
+  lr: 1e-3
+  gamma: 0.99
+  epochs: 20
+  eval_epochs: 2
+  device: cuda
+  distributed: false
+  checkpoint_dir: ./save
+  lr_schedule: exp
+  clean_slate: false
+  set_manual_seed: 0
+  loss_weights: [0.3, 0.5, 0.1, 0.1]
+
+refuge_args:
+  root: /home/rb080/assignments/Project/Data/refuge_full/refuge_data/refuge_data
+  image_size: 256
+  mask_type: disc
+
+isic_args:
+  root: /home/rb080/assignments/Project/Data/ISIC
+  image_size: 256
+
+enable_wandb: false
