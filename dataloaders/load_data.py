@@ -24,18 +24,18 @@ class Refuge_Dataset(Dataset):
 
         #assert len(self.img_size) != 2, f"Image size cannot be: {self.img_size}"
         img = cv2.resize(img, (self.img_size, self.img_size), cv2.INTER_AREA)
-
         img = np.array(img / 255.0, dtype=np.float32)  # normalization
-
+        
         if is_mask:
-            img = (img - img.min()) / img.max()
-            img = 1 - img
+            img = 1.0 - img
+            
             if self.mask_type == 'disc':
                 img[img > 0.3] = 1.0
                 img[img <= 0.3] = 0.0
             elif self.mask_type == 'cup':
                 img[img > 0.7] = 1.0
                 img[img <= 0.7] = 0.0
+            
 
         return img
     

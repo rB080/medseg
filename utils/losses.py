@@ -19,7 +19,7 @@ class segmentation_loss(nn.Module):
             i = y_true.sum(1).sum(1).sum(1)
             j = y_pred.sum(1).sum(1).sum(1)
             intersection = (y_true * y_pred).sum(1).sum(1).sum(1)
-        score = (2. * intersection) / (i + j + smooth)
+        score = (2. * intersection + smooth) / (i + j + smooth)
         # score = (intersection + smooth) / (i + j - intersection + smooth)#iou
         return score.mean()
 
@@ -34,7 +34,7 @@ class segmentation_loss(nn.Module):
         total = (inputs + targets).sum(1).sum(1).sum(1)
         union = total - intersection
 
-        IoU = (intersection)/(union + smooth)
+        IoU = (intersection + smooth)/(union + smooth)
 
         return (1 - IoU.mean())
 

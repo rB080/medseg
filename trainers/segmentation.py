@@ -1,5 +1,6 @@
 from models.smp_models import smp_models
 from models.unet import UNet
+from models.ours import Attention_Guided_UNet
 from dataloaders.load_data import *
 
 from utils.segmentation_metrics import *
@@ -124,6 +125,8 @@ class Segmentation_Trainer():
             self.model = UNet(1)
         elif self.cfg.model_type[:3] == 'smp':
             self.model = smp_models(self.cfg.model_type[4:], 1)
+        elif self.cfg.model_type == 'ours':
+            self.model = Attention_Guided_UNet(1)
         
         if self.cfg.train_settings.distributed:
             self.model = nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
@@ -154,7 +157,7 @@ class Segmentation_Trainer():
         return out
 
     def backward_prop(self, out, gt):
-        
+
         loss = self.segmentation_loss(gt, out, self.cfg.train_settings.loss_weights)
         self.optimizer.zero_grad()
         loss.backward()
@@ -254,7 +257,30 @@ class Segmentation_Trainer():
                 if self.is_master: print("Average Epoch DSC: ", dsc)
                 if self.is_master: print("Average Epoch ACC: ", acc)
                 if self.is_master: print("===========================================================================================")
+    
+    def visualize(self):
+        iterable = tqdm(enumerate(self.test_loader), total=len(self.test_loader))
+        METRICS = {"acc": 0.0, "sen": 0.0, "pre": 0.0, "rec": 0.0, "iou": 0.0, "dsc": 0.0}
+        collect_gt, collect_pred = [], []
+        for idx, data_batch in iterable:
+            
+            out = self.forward_prop(data=data_batch, train=False)
+            metrics = segmentation_metrics(out, data_batch[1].to(self.device))
+            for k,v in metrics.items():
+                METRICS[k] += v / len(self.test_loader)
+            collect_gt.append(data_batch[1].detach().cpu().numpy())
+            collect_pred.append(out.detach().cpu().numpy())
+        print(METRICS)
+
+        if self.cfg.dataset == 'refuge' or self.cfg.dataset == 'isic':
+            plotROC(np.array(collect_gt).ravel(), 
+                    np.array(collect_pred).ravel(), 
+                    osp.join(self.cfg.train_settings.checkpoint_dir, self.cfg.run_name, "ROC_plot_test.png"), 
+                    self.cfg.model_type+"_"+self.cfg.dataset)
+
+
         
+
     def save_checkpoint(self, save_type='last'):
         
         ckpt_path = osp.join(self.cfg.train_settings.checkpoint_dir, self.cfg.run_name, "segmentation_{}.pth".format(save_type))

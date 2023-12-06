@@ -2,6 +2,7 @@ runs
 *.pth
 outs
 outputs
+*.png
 
 
 # Byte-compiled / optimized / DLL files
