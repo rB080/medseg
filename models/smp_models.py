@@ -1,11 +1,11 @@
 import segmentation_models_pytorch as smp
 import torch.nn as nn
 
-class smp_models(nn.Module):
+class smp_models(nn.Module): # Uses pre-trained SMP models for baseline testing...
     
     def __init__(self, model_key, nclass):
         super().__init__()
-        model_dict = {
+        model_dict = { # dict of known models
             "unet": smp.Unet,
             "upp": smp.UnetPlusPlus,
             "fpn": smp.FPN,
@@ -19,9 +19,9 @@ class smp_models(nn.Module):
                                            in_channels = 3,
                                            classes=nclass)
     
-    def count_parameters(self):
+    def count_parameters(self):  # Counts number of model parameters
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
-    def forward(self, x):
+    def forward(self, x): # Forward function
         out = self.model(x)
         return out

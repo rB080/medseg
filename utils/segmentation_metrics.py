@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve as rc
 from sklearn.metrics import auc as auc
 
+# compute binary classification performance indices
 def vals(pred, mask):
     pred = torch.round(pred)
     TP = (mask * pred).sum()
@@ -12,7 +13,7 @@ def vals(pred, mask):
     FN = mask.sum() - TP
     return TP, TN, FP, FN
 
-
+# compute classification/segmentation metrics
 def segmentation_metrics(pred, mask, thresh=0.5):
     TP, TN, FP, FN = vals(pred, mask)
     acc = (TP + TN) / (TP + TN + FP + FN)
@@ -31,6 +32,7 @@ def segmentation_metrics(pred, mask, thresh=0.5):
             "rec": recc, "dsc": dice, "iou": iou}
     return dict
 
+# generate and plot AUROC curves
 def plotROC(GTs, PREDs, save_path, id_text):
     fpr, tpr, _ = rc(GTs, PREDs)
     roc_auc = auc(fpr, tpr)

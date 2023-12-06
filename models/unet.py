@@ -1,3 +1,11 @@
+
+
+#######################################################
+# Please do not use this code for UNet. Put here for testing
+# but doesn't work. Use SMP Unet instead in smp_models.py. It
+# effectively functions better.
+#######################################################
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,4 +1,6 @@
-
+###################################################################################################3
+# Contains Dataloader Classes
+###################################################################################################
 import os
 import torch
 import torch.nn.functional as F
@@ -9,6 +11,14 @@ import numpy as np
 
 
 class Refuge_Dataset(Dataset):
+    ###################################################
+    # Loader for REFUGE Dataset
+    # Gets:
+    # root_path: path to dataset directories
+    # split: Dataset split used
+    # image_size: size of images to be used upon resizing
+    # mask_type: determines disc or cup masks to be loaded
+    ###################################################
     def __init__(self, root_path, split='train', image_size=256, mask_type='disc'):
         super().__init__()
         self.root_path = root_path
@@ -17,7 +27,7 @@ class Refuge_Dataset(Dataset):
         self.mask_type = mask_type
         self.load_metadata(split=split)
 
-    def load_image(self, path, is_mask=False):
+    def load_image(self, path, is_mask=False): # loads image based on given image and mask paths
         
         if not is_mask: img = cv2.imread(path)
         else: img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
@@ -29,7 +39,7 @@ class Refuge_Dataset(Dataset):
         if is_mask:
             img = 1.0 - img
             
-            if self.mask_type == 'disc':
+            if self.mask_type == 'disc': # selects masks based on thresholds...
                 img[img > 0.3] = 1.0
                 img[img <= 0.3] = 0.0
             elif self.mask_type == 'cup':
@@ -39,7 +49,7 @@ class Refuge_Dataset(Dataset):
 
         return img
     
-    def load_metadata(self, split='train'):
+    def load_metadata(self, split='train'): # loads dataset metadata i.e. (image_path, mask_path) pairs...
         img_dir = os.path.join(self.root_path, split, "images")
         gt_dir = os.path.join(self.root_path, split, "gts")
         data_list = sorted(os.listdir(img_dir))
@@ -49,7 +59,7 @@ class Refuge_Dataset(Dataset):
             gt_path = os.path.join(gt_dir, data[:-4]+".bmp")
             self.metadata.append((img_path, gt_path))
         
-    def __getitem__(self, index):
+    def __getitem__(self, index): # gets data for dataloader wrapper...
         img_path, gt_path = self.metadata[index]
         
         img, mask = self.load_image(img_path), self.load_image(gt_path, is_mask=True)
@@ -59,11 +69,20 @@ class Refuge_Dataset(Dataset):
 
         return img, mask
     
-    def __len__(self):
+    def __len__(self): # returns length of dataset
         return len(self.metadata)
 
 
+
+
 class Isic_Dataset(Dataset):
+    ###################################################
+    # Loader for ISIC 2017 Dataset
+    # Gets:
+    # root_path: path to dataset directories
+    # split: Dataset split used
+    # image_size: size of images to be used upon resizing
+    ###################################################
     def __init__(self, root_path, split='train', image_size=256):
         super().__init__()
         self.root_path = root_path
@@ -71,7 +90,7 @@ class Isic_Dataset(Dataset):
         self.img_size = image_size
         self.load_metadata(split=split)
 
-    def load_image(self, path, is_mask=False):
+    def load_image(self, path, is_mask=False): # loads image based on given image and mask paths
         
         if not is_mask: img = cv2.imread(path)
         else: img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
@@ -87,7 +106,7 @@ class Isic_Dataset(Dataset):
 
         return img
     
-    def load_metadata(self, split='train'):
+    def load_metadata(self, split='train'): # loads dataset metadata i.e. (image_path, mask_path) pairs...
         if split == 'train': 
             img_directory = 'ISIC-2017_Training_Data'
             msk_directory = 'ISIC-2017_Training_Part1_GroundTruth'
@@ -107,7 +126,7 @@ class Isic_Dataset(Dataset):
             gt_path = os.path.join(gt_dir, data)
             self.metadata.append((img_path, gt_path))
         
-    def __getitem__(self, index):
+    def __getitem__(self, index): # gets data for dataloader wrapper...
         img_path, gt_path = self.metadata[index]
         
         img, mask = self.load_image(img_path), self.load_image(gt_path, is_mask=True)
@@ -117,5 +136,5 @@ class Isic_Dataset(Dataset):
 
         return img, mask
     
-    def __len__(self):
+    def __len__(self): # returns length of dataset
         return len(self.metadata)

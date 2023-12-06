@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class SE_Block(nn.Module):
+    ###################################################
+    # Squeeze and Excite Module (Channel Attention)
+    ###################################################
     def __init__(self, c, r=16):  # c -> no of channels; r-> reduction ratio
         super().__init__()
         self.squeeze = nn.AdaptiveAvgPool2d(1)
@@ -20,6 +23,10 @@ class SE_Block(nn.Module):
         return x * y.expand_as(x)
     
 class SpatialAttention(nn.Module):
+    ###################################################
+    # Spatial Attention
+    # uses mean and max of activations
+    ###################################################
     def __init__(self, kernel_size=7, out_channels=1):
         super(SpatialAttention, self).__init__()
 
@@ -36,8 +43,10 @@ class SpatialAttention(nn.Module):
     
 
 class DoubleConv(nn.Module):
-    """(convolution => [BN] => ReLU) * 2"""
-
+    ###################################################
+    # Does the following conv operation: 
+    # (convolution => [BN] => ReLU) * 2
+    ###################################################
     def __init__(self, in_channels, out_channels, mid_channels=None):
         super().__init__()
         if not mid_channels:
@@ -56,7 +65,9 @@ class DoubleConv(nn.Module):
 
 
 class Down(nn.Module):
-    """Downscaling with maxpool then double conv"""
+    ###################################################
+    # Downscaling with maxpool then double conv
+    ###################################################
 
     def __init__(self, in_channels, out_channels):
         super().__init__()
@@ -70,7 +81,9 @@ class Down(nn.Module):
 
 
 class Up(nn.Module):
-    """Upscaling then double conv"""
+    ###################################################
+    # Upscaling then double conv
+    ###################################################
 
     def __init__(self, in_channels, out_channels, bilinear=True):
         super().__init__()
@@ -98,7 +111,7 @@ class Up(nn.Module):
         return self.conv(x)
 
 
-class OutConv(nn.Module):
+class OutConv(nn.Module): # output conv layers
     def __init__(self, in_channels, out_channels):
         super(OutConv, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
@@ -112,6 +125,8 @@ class Attention_Guided_UNet(nn.Module):
         self.n_classes = n_classes
         self.bilinear = bilinear
 
+        # Defines Unet layers
+        ########################################################################
         self.inc = (DoubleConv(3, 64))
         self.down1 = (Down(64, 128))
         self.down2 = (Down(128, 256))
@@ -123,21 +138,26 @@ class Attention_Guided_UNet(nn.Module):
         self.up3 = (Up(256, 128 // factor, bilinear))
         self.up4 = (Up(128, 64, bilinear))
         self.outc = (OutConv(64, n_classes))
-
+        ########################################################################
+        # Defines Spatial Attention layers
+        ########################################################################
         self.sa1 = SpatialAttention(out_channels=64)
         self.sa2 = SpatialAttention(out_channels=128)
         self.sa3 = SpatialAttention(out_channels=256)
         self.sa4 = SpatialAttention(out_channels=512)
-
+        ########################################################################
+         # Defines Channel Attention layers
+        ########################################################################
         self.se1 = SE_Block(64)
         self.se2 = SE_Block(128)
         self.se3 = SE_Block(256)
         self.se4 = SE_Block(512)
+        ########################################################################
 
-    def count_parameters(self):
+    def count_parameters(self): # Counts number of model parameters
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
-    def forward(self, x):
+    def forward(self, x): # Forward function
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
